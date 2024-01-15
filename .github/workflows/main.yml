@@ -1,38 +1,34 @@
 name: Build for Android
 
 on:
-  [pull_request, push, workflow_dispatch]
+  [push, pull_request]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     strategy:
       matrix:
-        arch: [ "arm32" , "aarch64" , "x86_64" ]
+        arch: [ "arm32", "aarch64", "x86_64" ]
       fail-fast: false
 
     name: "Build ${{matrix.arch}}"
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
-      ANDROID_NDK_ROOT: "${ANDROID_SDK_ROOT}/ndk-bundle"
+      ANDROID_NDK_HOME: "${ANDROID_SDK_ROOT}/ndk-bundle"
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Setup
         run: |
-          sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
-          pip3 install mako ninja
+          sudo pip3 install meson ninja
           mkdir -p /tmp/build/lib/pkgconfig
           cp libdrm.pc /tmp/build/lib/pkgconfig/
-          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
-          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
-          
+
       - name: Build libepoxy
         run: |
-          git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
+          git clone --depth 1 https://github.com/anholt/libepoxy.git
           cd libepoxy
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
@@ -62,4 +58,3 @@ jobs:
         with:
           name: build_${{matrix.arch}}
           path: /tmp/build
-
